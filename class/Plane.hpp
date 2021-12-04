@@ -10,7 +10,6 @@ class Plane;
 void updatePlaneCoordinates(Plane &plane, bool &boolean);
 
 class Plane{
-    mutex lock;
     string ID;
     float speed;
     float height;
@@ -53,21 +52,18 @@ void updatePlaneCoordinates(Plane &plane, bool &boolean){
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     while(!boolean){
         /*
-         * 280 kts = 0.5s
-         * 180 kts = 1.5s
+         * 180 kts = 1.25s
+         * 280 kts = 0.25s
          */
 
         /** TODO
-         *   - L'update des coordonnées va varier en fonction des différents paramètres
+         *   - Le temps pour update l'avion dépend de la vitesse
+         *   - L'update des coordonnées va dépendre de la vitesse et la
          */
+        int timeToWait = static_cast<int>((-(plane.getSpeed()*0.01) + 3.05) * 1000);
 
-        default_random_engine generator(seed);
-        uniform_int_distribution gen(1,5);
-
-        //int time = (((plane.getSpeed()*1.5)/280));
-
-        this_thread::sleep_for(std::chrono::seconds(gen(generator)));
-        plane.update(0, 0.5, 0);
+        this_thread::sleep_for(std::chrono::milliseconds(timeToWait));
+        plane.update(0, 0.01, 0);
     }
 }
 

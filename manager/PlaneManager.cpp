@@ -19,11 +19,11 @@ vector<Plane*> generatePlane(int n){
     uniform_int_distribution<int> randomString(100, 800);
     uniform_real_distribution<float> randomSpeed(180, 280);
     uniform_real_distribution<float> randomHeight(25000, 34000);
-    uniform_real_distribution<float> randomRadius(1, 1.5);
+    uniform_real_distribution<float> randomRadius(2, 9);
     uniform_real_distribution<float> randomAngle(0, 2*M_PI);
 
     for (int i = 0; i < n; ++i) {
-        Sleep(static_cast<DWORD>(1000));
+        //Sleep(static_cast<DWORD>(1000));
         auto* plane = new Plane;
 
         plane->traj.setXY(randomRadius(generator), randomAngle(generator));

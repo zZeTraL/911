@@ -5,21 +5,18 @@
 #include "class/Trajectory.hpp"
 #include "class/Plane.hpp"
 
-#include "manager/IUManager.cpp"
+#include "manager/UIManager.cpp"
 #include "manager/PlaneManager.cpp"
 
 #include <windows.h>
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-#define _PATH_IMG_ "img/"
-
 mutex APPmutex;
-const std::string path_image(_PATH_IMG_);
 
 void visualization(vector<Plane*> &planes){
     // Fenêtre
-    sf::RenderWindow app(sf::VideoMode(1000, 1000, 32), "My Camera");
+    sf::RenderWindow app(sf::VideoMode(1000, 1000, 32), "Projet");
     // Frames Per Second (FPS)
     app.setFramerateLimit(30); // limite la fenêtre à 60 images par seconde
 
@@ -31,8 +28,17 @@ void visualization(vector<Plane*> &planes){
             if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) || event.type == sf::Event::Closed){app.close();}
         }
 
-        // Affichages
         app.clear();
+
+        sf::Font font;
+        if(!font.loadFromFile("../fonts/WorkSans-Regular.ttf")){
+            exit(0);
+        }
+
+        sf::Text text;
+        text.setFont(font);
+        text.setCharacterSize(16);
+        text.setFillColor(sf::Color::White);
 
         for (auto &plane : planes){
 
@@ -42,26 +48,30 @@ void visualization(vector<Plane*> &planes){
              */
 
             // Création du cercle = la trajectoire de l'avion
-            sf::CircleShape circle(plane->traj.getRadius()*100, 2000);
+            sf::CircleShape circle(plane->traj.getRadius()*50, 2000);
             circle.setFillColor(sf::Color::Transparent);
             circle.setOutlineThickness(1);
             circle.setOutlineColor(sf::Color(52, 152, 219, 125));
             circle.setOrigin(circle.getRadius()/2, circle.getRadius()/2);
-            circle.setPosition(500 - (plane->traj.getRadius()*100)/2 , 500 - (plane->traj.getRadius()*100/2) );
+            circle.setPosition(500 - (plane->traj.getRadius()*50)/2 , 500 - (plane->traj.getRadius()*50/2) );
 
             // Création du point représentant l'avion
             sf::CircleShape point(5, 500);
 
             // STYLE
-            point.setFillColor(sf::Color(192, 57, 43, 255));
+            //point.setFillColor(sf::Color(39, 174, 96, 255));
             circleColorGradient(plane, point);
 
             point.setOrigin(point.getRadius()/2, point.getRadius()/2);
 
             float angle = plane->traj.getAngle();
-            point.setPosition(500 - 2.5 + ((plane->traj.getRadius()*100)*cos(angle)), 500 - 2.5 + ((plane->traj.getRadius()*100)*sin(angle)));
+            point.setPosition(500 - 2.5 + ((plane->traj.getRadius()*50)*cos(angle)), 500 - 2.5 + ((plane->traj.getRadius()*50)*sin(angle)));
+            text.setPosition(500 + ((plane->traj.getRadius()*50)*cos(angle)), 500 + ((plane->traj.getRadius()*50)*sin(angle)));
+            text.setString(plane->getID());
+
             app.draw(circle);
             app.draw(point);
+            app.draw(text);
         }
         app.display();
     }
@@ -71,8 +81,7 @@ void landingPhase(queue<Plane*> &queuePlaneLanded ,vector<Plane*> &vecPlane, boo
     while (!boolean) {
         if (!vecPlane.empty()) {
             // On lock le thread car un plane à la fois atteri
-            APPmutex.lock();
-            this_thread::sleep_for(1s);
+            //APPmutex.lock();
             Plane *planeToLand;
             float smallestRadius = 100.f;
             for (auto &plane: vecPlane) {
@@ -84,12 +93,13 @@ void landingPhase(queue<Plane*> &queuePlaneLanded ,vector<Plane*> &vecPlane, boo
             }
 
             /*
-             * 1.2676 -> 0.1
-             * 28383 ->
+             * RADIUS -> STEPRADIUS
+             * HEIGHT -> DESCENDING PHASE
+             *
+             * stepHeight = HEIGHT*STEPRADIUS/RADIUS;
              *
              */
-
-            float stepRadius = 0.1f;
+            float stepRadius = 0.1f; //0.025f;
             float stepHeight = planeToLand->getHeight()*stepRadius/planeToLand->traj.getRadius();
             while (planeToLand->traj.getRadius() != 0) {
                 cout << "Plane height is: " << planeToLand->getHeight() << endl;
@@ -121,7 +131,7 @@ void landingPhase(queue<Plane*> &queuePlaneLanded ,vector<Plane*> &vecPlane, boo
             //cout << "Plane height is: " << planeToLand->getHeight() << endl;
 
             // On n'oublie pas de unlock le thread sinon problème
-            APPmutex.unlock();
+            //APPmutex.unlock();
         } else {
             // DEBUG
             cout << "APP THREAD IS WAITING FOR DATA (10s)\n";
@@ -136,8 +146,17 @@ int main() {
     vector<Plane*> vectorPlane;
     bool stopThread = false;
 
-    vectorPlane = generatePlane(3);
-    cout << vectorPlane.size();
+    Plane* maxSpeedPlane = new Plane;
+    maxSpeedPlane->setID("MAXSPEED");
+    maxSpeedPlane->traj.setXY(9, 3.14);
+    maxSpeedPlane->setSpeed(300);
+    maxSpeedPlane->setHeight(30000);
+    vectorPlane.push_back(maxSpeedPlane);
+
+    vectorPlane = generatePlane(10);
+    vectorPlane.push_back(maxSpeedPlane);
+    // DEBUG
+    //cout << vectorPlane.size();
 
     thread UI(visualization, ref(vectorPlane));
     thread APP(landingPhase, ref(queuePlaneLanded), ref(vectorPlane), ref(stopThread));
@@ -145,15 +164,12 @@ int main() {
     while (true){
         string a;
         cin >> a;
-
-
         if(a == "0"){
             cout << "Size of queuePlaneLanded is: " << queuePlaneLanded.size() << "\n";
             /*while(!queuePlaneLanded.empty()){
                 cout << " " << &queuePlaneLanded.front();
                 queuePlaneLanded.pop();
             }*/
-
             cout << "Size of vectorPlane is: " << vectorPlane.size() << "\n";
             exit(0);
         }

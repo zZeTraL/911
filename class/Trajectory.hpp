@@ -14,10 +14,16 @@ public:
         angle = a;
     }
 
+
+    // Getters
     float getRadius() const{return radius;}
     float getAngle() const{return angle;}
     float getX() const{return x;}
     float getY() const{return y;}
+
+
+    // Setters
+    void setRadius(float number){radius = number;}
 
     void setXY(float r, float a){
         angle = a;
@@ -26,6 +32,7 @@ public:
         y = r * sin(a);
     }
 
+    // Methods
     friend ostream& operator<<(ostream &os, const Trajectory &trajectory);
 };
 

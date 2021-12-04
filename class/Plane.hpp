@@ -11,8 +11,8 @@ void updatePlaneCoordinates(Plane &plane, bool &boolean);
 
 class Plane{
     string ID;
-    float speed;
-    float height;
+    float speed{};
+    float height{};
     bool stopThread = false;
     thread planeThread;
 public:
@@ -28,7 +28,6 @@ public:
     }
 
     friend ostream& operator<<(ostream &os, const Plane &plane);
-
 
     // Getters
     float getSpeed() const {return speed;}
@@ -49,19 +48,17 @@ public:
 };
 
 void updatePlaneCoordinates(Plane &plane, bool &boolean){
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     while(!boolean){
         /*
          * 180 kts = 1.25s
          * 280 kts = 0.25s
+         * Function: f(x) = -1/100*X+3.05
          */
 
         /** TODO
-         *   - Le temps pour update l'avion dépend de la vitesse
          *   - L'update des coordonnées va dépendre de la vitesse et la
          */
         int timeToWait = static_cast<int>((-(plane.getSpeed()*0.01) + 3.05) * 1000);
-
         this_thread::sleep_for(std::chrono::milliseconds(timeToWait));
         plane.update(0, 0.01, 0);
     }

@@ -49,7 +49,7 @@ void loadText(sf::RenderWindow &app, vector<Plane*> &vecPlane){
 }
 void loadBackground(sf::RenderWindow &app){
     sf::Texture backgroundTexture;
-    if (!backgroundTexture.loadFromFile("../background.jpg")){
+    if (!backgroundTexture.loadFromFile("../img/background.jpg")){
         exit(0);
     }
 

@@ -2,6 +2,11 @@
 #include <windows.h>
 #include <SFML/Graphics.hpp>
 
+#define WIDTH 1500.f
+#define HEIGHT 720.f
+
+float zoom = 10.f;
+
 /**
  * Effet fade qui change la couleur du point en fonction de la hauteur
  *
@@ -17,9 +22,9 @@ void circleColorGradient(Plane* &plane, sf::CircleShape &circle) {
      *      GREEN[57, 174]
      *      BLUE[43, 93]
      */
-    long red = mathMap(plane->getHeight(), 0, 34000, 192, 39);
-    long green = mathMap(plane->getHeight(), 0, 34000, 57, 174);
-    long blue = mathMap(plane->getHeight(), 0, 34000, 43, 93);
+    long red = mathMap<long>((long)plane->getHeight(), 0, 34000, 192, 39);
+    long green = mathMap<long>((long)plane->getHeight(), 0, 34000, 57, 174);
+    long blue = mathMap<long>((long)plane->getHeight(), 0, 34000, 43, 93);
 
     if (plane->getHeight() < 25000) {
         circle.setFillColor(sf::Color(red, green, blue, 255));
@@ -29,7 +34,14 @@ void circleColorGradient(Plane* &plane, sf::CircleShape &circle) {
         circle.setFillColor(sf::Color(39, 174, 96, 255));
     }
 }
-void loadText(sf::RenderWindow &app, vector<Plane*> &vecPlane){
+
+/**
+ * Permet de charger tous les textes (tooltip au niveau de chaque avion)
+ *
+ * @param app
+ * @param vecPlane
+ */
+void loadPlaneTag(sf::RenderWindow &app, vector<Plane*> &vecPlane){
     sf::Font font;
     if(!font.loadFromFile("../fonts/WorkSans-Regular.ttf")){
         exit(0);
@@ -41,12 +53,18 @@ void loadText(sf::RenderWindow &app, vector<Plane*> &vecPlane){
         text.setCharacterSize(16);
         text.setFillColor(sf::Color::White);
 
-        text.setPosition(500 + ((plane->traj.getRadius()*50)*cos(plane->traj.getAngle())), 500 + ((plane->traj.getRadius()*50)*sin(plane->traj.getAngle())));
+        text.setPosition((int)(WIDTH/2) + ((plane->traj.getRadius()*10)*cos(plane->traj.getAngle())), (int)(HEIGHT/2) + ((plane->traj.getRadius()*10)*sin(plane->traj.getAngle())));
         text.setString(plane->getID());
         app.draw(text);
     }
 
 }
+
+/**
+ * Permet de charger un background prédéfini
+ *
+ * @param app
+ */
 void loadBackground(sf::RenderWindow &app){
     sf::Texture backgroundTexture;
     if (!backgroundTexture.loadFromFile("../img/background.jpg")){
@@ -57,32 +75,75 @@ void loadBackground(sf::RenderWindow &app){
     background.setTexture(backgroundTexture);
     app.draw(background);
 }
-void loadComponent(sf::RenderWindow &app, vector<Plane*> &vecPlane){
+
+/**
+ * Permet de charger tous les avions à afficher (debug = true affiche les trajectoire des avions)
+ *
+ * @param app
+ * @param vecPlane
+ * @param debug
+ */
+void loadComponent(sf::RenderWindow &app, vector<Plane*> &vecPlane, bool debug){
     for (auto &plane : vecPlane){
         float angle = plane->traj.getAngle();
         float radius = plane->traj.getRadius();
 
         // Création du cercle = la trajectoire de l'avion
-        sf::CircleShape circle(radius*50, 2000);
-        circle.setFillColor(sf::Color::Transparent);
-        circle.setOutlineThickness(1);
-        circle.setOutlineColor(sf::Color(52, 152, 219, 125));
-        circle.setOrigin(circle.getRadius()/2, circle.getRadius()/2);
-        circle.setPosition(500 - (radius*50)/2 , 500 - (radius*50/2) );
+        if(debug){
+            sf::CircleShape circle(radius*zoom, 2000);
+            circle.setFillColor(sf::Color::Transparent);
+            circle.setOutlineThickness(1);
+            circle.setOutlineColor(sf::Color(52, 152, 219, 125));
+            circle.setOrigin(circle.getRadius()/2, circle.getRadius()/2);
+            circle.setPosition((int)(WIDTH/2) - (radius*zoom)/2 , (int)(HEIGHT/2) - (radius*zoom/2) );
+            app.draw(circle);
+        }
 
         // Création du point représentant l'avion
         sf::CircleShape point(5, 500);
         circleColorGradient(plane, point);
         point.setOrigin(point.getRadius()/2, point.getRadius()/2);
-        point.setPosition(500 - 2.5 + ((radius*50)*cos(angle)), 500 - 2.5 + ((radius*50)*sin(angle)));
+        point.setPosition((float)((WIDTH/2) - 2.5) + ((radius*zoom)*cos(angle)), (float)((HEIGHT/2) - 2.5) + ((radius*zoom)*sin(angle)));
 
-        app.draw(circle);
         app.draw(point);
     }
 }
 
-void visualization(vector<Plane*> &planes){
-    sf::RenderWindow app(sf::VideoMode(1000, 1000, 32), "Projet");
+/**
+ * Permet de charger et d'afficher chaque aéroport
+ *
+ * @param app
+ * @param vecAirport
+ */
+void loadAirport(sf::RenderWindow &app, vector<Airport*> &vecAirport){
+    for(auto airport : vecAirport){
+        sf::CircleShape circle(25, 2000);
+        circle.setFillColor(sf::Color::Transparent);
+        circle.setOutlineThickness(2);
+        circle.setOutlineColor(sf::Color(127, 140, 141, 255));
+        circle.setOrigin(circle.getRadius()/2, circle.getRadius()/2);
+        circle.setPosition(airport->getX() - (circle.getRadius()/2), airport->getY() - (circle.getRadius()/2));
+        app.draw(circle);
+
+        sf::Font font;
+        if(!font.loadFromFile("../fonts/WorkSans-Regular.ttf")){
+            exit(0);
+        }
+        sf::Text text;
+        text.setFont(font);
+        text.setCharacterSize(16);
+        text.setFillColor(sf::Color::White);
+
+        text.setPosition(airport->getX() + 20, airport->getY() + 15);
+        text.setString(airport->getID());
+
+        app.draw(circle);
+        app.draw(text);
+        }
+}
+
+void visualization(vector<Plane*> &vecPlane, vector<Airport*> &vecAirport){
+    sf::RenderWindow app(sf::VideoMode(WIDTH, HEIGHT, 32), "Projet");
     app.setFramerateLimit(60);
 
     // Tant que ma fenêtre est open
@@ -96,8 +157,9 @@ void visualization(vector<Plane*> &planes){
         app.clear();
 
         //loadBackground(app);
-        loadText(app, planes);
-        loadComponent(app, planes);
+        loadAirport(app, vecAirport);
+        loadPlaneTag(app, vecPlane);
+        loadComponent(app, vecPlane, true);
 
         app.display();
     }

@@ -19,7 +19,7 @@ vector<Plane*> generatePlane(int n){
     uniform_int_distribution<int> randomString(100, 800);
     uniform_real_distribution<float> randomSpeed(180, 280);
     uniform_real_distribution<float> randomHeight(25000, 34000);
-    uniform_real_distribution<float> randomRadius(2, 9);
+    uniform_real_distribution<float> randomRadius(5.39, 26.99);
     uniform_real_distribution<float> randomAngle(0, 2*M_PI);
 
     for (int i = 0; i < n; ++i) {
@@ -35,4 +35,56 @@ vector<Plane*> generatePlane(int n){
         cout << setprecision(5) << *plane << endl;
     }
     return vectorPlane;
+}
+
+/**
+ * Permet de trouver un avion qui est capable d'atterrir
+ *
+ * @param vecPlane vector contenant tous les avions en orbites autour d'un aéroport
+ * @return Retourne un avion qui est le plus apte à atterrir
+ */
+Plane* findPlaneToLand(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane){
+    // Si des avions sont actifs (i.e dans le ciel)
+    if(!vecPlane.empty()){
+        Plane *planeToLand;
+
+        // On cherche l'avion avec un radius très petit
+        float smallestRadius = 100.f;
+        for (auto &plane: vecPlane) {
+            float currentlyPlaneRadius = plane->traj.getRadius();
+            if (currentlyPlaneRadius < smallestRadius) {
+                smallestRadius = currentlyPlaneRadius;
+                planeToLand = plane;
+            }
+        }
+
+        /** TODO
+         *   - Faire la différence entre les aéroports
+         *   - Sélectionner l'aéroport le plus adéquat pour l'atterrissage (On check les normes des vecteurs etc...)
+         *   - Peut être réutiliser afin d'orienter l'avion vers un aéroport (SI ON GERE PLUSIEURS AÉROPORTS)
+         */
+        // On check l'aéroport le plus proche de l'avion
+        /*Airport* airportDestination;
+        for (int i = 0; i < vecAirport.size(); ++i) {
+            Airport* currentlyTargetedAirport = vecAirport.at(i);
+            for(auto &airport: vecAirport){
+                if(vectorNorm(currentlyTargetedAirport, planeToLand) > vectorNorm(airport, planeToLand)){
+                    cout << "HERE\n\n";
+                    airportDestination = currentlyTargetedAirport;
+                } else {
+                    continue;
+                }
+            }
+        }
+        cout << *airportDestination;*/
+
+        // On check si l'aéroport à des places de parking disponible
+        if(vecAirport.at(1)->getAvailableSlot() != 0){
+            return planeToLand;
+        } else {
+            return nullptr;
+        }
+
+    }
+
 }

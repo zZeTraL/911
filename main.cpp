@@ -2,115 +2,67 @@
 #include <random>
 #include <queue>
 
+// CLass
 #include "class/Trajectory.hpp"
 #include "class/Plane.hpp"
+#include "class/Airport.hpp"
 
 // Utilities
-#include "utils/utilities.cpp"
+#include "utils/Utilities.cpp"
 
 // Manager
 #include "manager/UIManager.cpp"
 #include "manager/PlaneManager.cpp"
-
-#include <windows.h>
-
-mutex APPmutex;
-void landingPhase(queue<Plane*> &queuePlaneLanded ,vector<Plane*> &vecPlane, bool &boolean){
-    while (!boolean) {
-        if (!vecPlane.empty()) {
-            // On lock le thread car un plane à la fois atteri
-            APPmutex.lock();
-            Plane *planeToLand;
-            float smallestRadius = 100.f;
-            for (auto &plane: vecPlane) {
-                float currentlyPlaneRadius = plane->traj.getRadius();
-                if (currentlyPlaneRadius < smallestRadius) {
-                    smallestRadius = currentlyPlaneRadius;
-                    planeToLand = plane;
-                }
-            }
-
-            /*
-             * RADIUS -> STEPRADIUS
-             * HEIGHT -> DESCENDING PHASE
-             * stepHeight = HEIGHT*STEPRADIUS/RADIUS;
-             */
-            float stepRadius = 0.1f; //0.025f;
-            float stepHeight = planeToLand->getHeight()*stepRadius/planeToLand->traj.getRadius();
-            while (planeToLand->traj.getRadius() != 0) {
-                //cout << "Plane height is: " << planeToLand->getHeight() << endl;
-                /** TODO
-                 *   - Le temps pour update le radius à redéfinir
-                 *   - Bien évidement, il faut réduire la height du plane lors de l'atterissage synchronisé avec le radius
-                 *   - La réduction du radius va se faire en fonction de la vitesse / height du plane
-                 *   - ...
-                 */
-
-                Sleep(DWORD(1000));
-                if (planeToLand->traj.getRadius() - stepRadius < 0) {
-                    planeToLand->traj.setRadius(0);
-                    planeToLand->setHeight(0);
-                    break;
-                }
-                planeToLand->update(stepRadius, 0, stepHeight);
-            }
-
-            // On supprimer l'avion
-            vecPlane.erase(std::remove(vecPlane.begin(), vecPlane.end(), planeToLand), vecPlane.end());
-
-            // On ajoute l'avion atteri dans la landingQueue
-            queuePlaneLanded.push(planeToLand);
-
-            // DEBUG
-            //cout << "The smallest radius detected is: " << smallestRadius << endl;
-            //cout << planeToLand->traj;
-            //cout << "Plane height is: " << planeToLand->getHeight() << endl;
-
-            // On n'oublie pas de unlock le thread sinon problème
-            APPmutex.unlock();
-        } else {
-            // DEBUG
-            cout << "APP THREAD IS WAITING FOR DATA (10s)\n";
-            this_thread::sleep_for(10s);
-            cout << "APP THREAD CAN NOW RECEIVING DATA\n";
-        }
-    }
-}
+#include "manager/APPManager.cpp"
+#include "manager/TWRManager.cpp"
 
 int main() {
     queue<Plane*> queuePlaneLanded;
-    vector<Plane*> vectorPlane;
+    vector<Plane*> vecPlane;
+    vector<Airport*> vecAirport;
     bool stopThread = false;
+
+    //============================================================================================================================================
 
     Plane* maxSpeedPlane = new Plane;
     maxSpeedPlane->setID("MAXSPEED");
-    maxSpeedPlane->traj.setXY(9, 3.14);
+    maxSpeedPlane->traj.setXY(40, 6.14);
     maxSpeedPlane->setSpeed(300);
-    maxSpeedPlane->setHeight(30000);
-    vectorPlane.push_back(maxSpeedPlane);
+    maxSpeedPlane->setHeight(5000);
+    vecPlane.push_back(maxSpeedPlane);
 
-    vectorPlane = generatePlane(10);
-    vectorPlane.push_back(maxSpeedPlane);
+    vecPlane = generatePlane(2);
+    vecPlane.push_back(maxSpeedPlane);
 
-    thread UI(visualization, ref(vectorPlane));
-    thread APP(landingPhase, ref(queuePlaneLanded), ref(vectorPlane), ref(stopThread));
+    Airport* BRU = new Airport("BRU", 999, 1250, 200);
+    Airport* LIL = new Airport("LIL", 2, WIDTH/2, HEIGHT/2);
+    vecAirport.push_back(BRU);
+    vecAirport.push_back(LIL);
+
+    //============================================================================================================================================
+
+    thread UI(visualization, ref(vecPlane), ref(vecAirport));
+    thread APP(landingPhase, ref(vecAirport), ref(vecPlane), ref(stopThread));
+    thread TWR(takeOffPhase, ref(vecAirport), ref(vecPlane), ref(stopThread));
+
+    //============================================================================================================================================
 
     while (true){
         string a;
         cin >> a;
         if(a == "0"){
-            cout << "Size of queuePlaneLanded is: " << queuePlaneLanded.size() << "\n";
-            /*while(!queuePlaneLanded.empty()){
-                cout << " " << &queuePlaneLanded.front();
-                queuePlaneLanded.pop();
-            }*/
-            cout << "Size of vectorPlane is: " << vectorPlane.size() << "\n";
+            cout << "Size of queuePlaneLanded is: " << queuePlaneLanded.size() << "\n\n";
+            for (auto airport: vecAirport) {
+                cout << *airport;
+            }
+            cout << "Size of vectorPlane is: " << vecPlane.size() << "\n\n";
             exit(0);
         }
     }
 
     UI.join();
     APP.join();
+    TWR.join();
 
     return EXIT_SUCCESS;
 }

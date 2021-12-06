@@ -27,8 +27,6 @@ public:
         this->traj.setXY(static_cast<float>(traj.getRadius() - stepRadius), static_cast<float>(traj.getAngle() + stepAngle));
     }
 
-    friend ostream& operator<<(ostream &os, const Plane &plane);
-
     // Getters
     float getSpeed() const {return speed;}
     float getHeight() const {return height;}
@@ -39,6 +37,7 @@ public:
     void setHeight(float number){height = number;}
     void setID(string str){ID = std::move(str);}
 
+    friend ostream& operator<<(ostream &os, const Plane &plane);
 
     // Destructor
     ~Plane(){

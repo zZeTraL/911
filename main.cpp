@@ -34,7 +34,7 @@ int main() {
     vecPlane = generatePlane(2);
     vecPlane.push_back(maxSpeedPlane);
 
-    Airport* BRU = new Airport("BRU", 999, 1250, 200);
+    Airport* BRU = new Airport("BRU", 10, 1250, 200);
     Airport* LIL = new Airport("LIL", 2, WIDTH/2, HEIGHT/2);
     vecAirport.push_back(BRU);
     vecAirport.push_back(LIL);
@@ -51,11 +51,14 @@ int main() {
         string a;
         cin >> a;
         if(a == "0"){
-            cout << "Size of queuePlaneLanded is: " << queuePlaneLanded.size() << "\n\n";
             for (auto airport: vecAirport) {
                 cout << *airport;
             }
             cout << "Size of vectorPlane is: " << vecPlane.size() << "\n\n";
+            while(!(vecAirport.at(1)->getQueuePlaneParked().empty())){
+                cout << *vecAirport.at(1)->getQueuePlaneParked().back() << "\n";
+                vecAirport.at(1)->planeParkedQueuePop();
+            }
             exit(0);
         }
     }

@@ -3,13 +3,14 @@
 class Airport{
     string id;
     queue<Plane*> queuePlaneParked;
-    queue<Plane*> queuePlaneLanded;
     float x, y;
     int availableSlot;
+    int maxSlot;
 public:
     Airport(string str, int slot, float posX, float posY){
         this->id = str;
         this->availableSlot = slot;
+        this->maxSlot = slot;
         this->x = posX;
         this->y = posY;
     }
@@ -33,12 +34,18 @@ public:
 
     // Getters
     int getAvailableSlot() const {return this->availableSlot;}
+    int getMaxSlot() const {return this->maxSlot;}
     string getID() const {return this->id;}
     float getX() const {return this->x;}
     float getY() const {return this->y;}
     queue<Plane*> getQueuePlaneParked() const {return queuePlaneParked;}
 
+    // Methods
+    void planeParkedQueuePop(){queuePlaneParked.pop();}
+
     friend ostream& operator<<(ostream &os, const Plane &plane);
+
+
 
 };
 

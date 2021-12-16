@@ -13,8 +13,9 @@ default_random_engine generator;
 
 void landingPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &boolean){
     while (!boolean) {
-        if (!vecPlane.empty()) {
-            if(TWRMutex.try_lock()) {
+        this_thread::sleep_for(1s);
+        if (!vecPlane.empty() && vecAirport.at(1)->getAvailableSlot() != 0) {
+            if(APPMutex.try_lock()) {
                 // On lock l'exécution du thread qui gère le décollage (car une piste disponible)
 
                 Plane *planeToLand = findPlaneToLand(vecAirport, vecPlane);
@@ -39,7 +40,7 @@ void landingPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &
                         planeToLand->update(stepRadius, 0, stepHeight);
                     }
 
-                    // On supprimer l'avion
+                    // On supprime l'avion
                     vecPlane.erase(std::remove(vecPlane.begin(), vecPlane.end(), planeToLand), vecPlane.end());
 
                     // On ajoute l'avion atteri dans la landingQueue
@@ -50,7 +51,7 @@ void landingPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &
                     }
 
                     // On n'oublie pas de déverrouiller le mutex
-                    TWRMutex.unlock();
+                    APPMutex.unlock();
                 } else {
                     cout << "Airport is full\n";
                 }
@@ -108,7 +109,7 @@ void landingPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &
         } else {
             // DEBUG
             cout << "APP THREAD IS WAITING FOR DATA...\n";
-            this_thread::sleep_for(10s);
+            this_thread::sleep_for(1s);
         }
     }
 }

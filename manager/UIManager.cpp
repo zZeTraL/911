@@ -5,7 +5,7 @@
 #define WIDTH 1500.f
 #define HEIGHT 720.f
 
-float zoom = 10.f;
+float zoom = 8.f;
 
 /**
  * Effet fade qui change la couleur du point en fonction de la hauteur
@@ -53,11 +53,10 @@ void loadPlaneTag(sf::RenderWindow &app, vector<Plane*> &vecPlane){
         text.setCharacterSize(16);
         text.setFillColor(sf::Color::White);
 
-        text.setPosition((int)(WIDTH/2) + ((plane->traj.getRadius()*10)*cos(plane->traj.getAngle())), (int)(HEIGHT/2) + ((plane->traj.getRadius()*10)*sin(plane->traj.getAngle())));
+        text.setPosition((int)(WIDTH/2) + ((plane->traj.getRadius()*zoom)*cos(plane->traj.getAngle())), (int)(HEIGHT/2) + ((plane->traj.getRadius()*zoom)*sin(plane->traj.getAngle())));
         text.setString(plane->getID());
         app.draw(text);
     }
-
 }
 
 /**

@@ -17,36 +17,40 @@ void landingPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &
         if (!vecPlane.empty() && vecAirport.at(1)->getAvailableSlot() != 0) {
             if(APPMutex.try_lock()) {
                 // On lock l'exécution du thread qui gère le décollage (car une piste disponible)
-
                 Plane *planeToLand = findPlaneToLand(vecAirport, vecPlane);
 
-                if (planeToLand != nullptr) {
+                if (planeToLand != nullptr && planeToLand->isWaiting()) {
+
+                    planeToLand->setWaitingToLand(false);
+                    planeToLand->setLandingPhase(true);
                     // stepHeight = HEIGHT * STEPRADIUS / RADIUS;
                     float stepRadius = 3.f; //0.025f;
                     float stepHeight = planeToLand->getHeight() * stepRadius / planeToLand->traj.getRadius();
                     while (planeToLand->traj.getRadius() != 0) {
                         /** TODO
-                         *   - Le temps pour update le radius à redéfinir    (optionnel)
+                         *   - Le temps pour update le radius à redéfinir           (optionnel)
+                         *   - Réduire la vitesse de l'avion lors de la descente    (optionnel)
                          */
                         // DEBUG
                         //cout << "Plane height is: " << planeToLand->getHeight() << endl;
-
-                        Sleep(DWORD(1000));
                         if (planeToLand->traj.getRadius() - stepRadius < 0) {
                             planeToLand->traj.setRadius(0);
                             planeToLand->setHeight(0);
                             break;
                         }
                         planeToLand->update(stepRadius, 0, stepHeight);
+                        Sleep(DWORD(1000));
                     }
 
-                    // On supprime l'avion
+                    // On supprime l'avion et on reset les booleans
                     vecPlane.erase(std::remove(vecPlane.begin(), vecPlane.end(), planeToLand), vecPlane.end());
+                    planeToLand->setLandingPhase(false);
 
-                    // On ajoute l'avion atteri dans la landingQueue
+                    // On ajoute l'avion atterri dans le parking de l'aéroport
                     for (auto &airport: vecAirport) {
                         if (airport->getID() == "LIL") {
                             airport->addPlaneLanded(planeToLand);
+                            break;
                         }
                     }
 

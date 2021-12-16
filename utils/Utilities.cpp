@@ -6,11 +6,11 @@
  *
  *-----------------------------------------------------------------------*/
 
-float vectorNorm(Airport* airport, Plane* plane){
+float vectorNorm(Airport *airport, Plane *plane) {
     float x = (airport->getX() + plane->traj.getX()) - airport->getX();
     float y = (airport->getY() + plane->traj.getY()) - airport->getY();
 
-    auto norm = (float)sqrt(pow(x, 2) + pow(y, 2));
+    auto norm = (float) sqrt(pow(x, 2) + pow(y, 2));
     // DEBUG
     //cout << "\nX: " << x << "\nY: " << y << "\nNorm is: " << norm << "\n";
     return norm;

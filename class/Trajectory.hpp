@@ -14,7 +14,6 @@ public:
         angle = a;
     }
 
-
     // Getters
     float getRadius() const{return radius;}
     float getAngle() const{return angle;}

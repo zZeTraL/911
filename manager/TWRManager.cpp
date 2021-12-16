@@ -11,6 +11,11 @@ void takeOffPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &
         if(vecAirport.at(1)->getAvailableSlot() == 0 || (vecPlane.empty() && (vecAirport.at(1)->getAvailableSlot() != vecAirport.at(1)->getMaxSlot())) ){
             if(APPMutex.try_lock()){
 
+                /**
+                 *  TODO
+                 *   - On check les aéroport qui sont full et on fait décoller un avion
+                 */
+
                 auto* newPlane = vecAirport.at(1)->getQueuePlaneParked().back();
                 vecAirport.at(1)->planeParkedQueuePop();
                 vecAirport.at(1)->addSlot(1);
@@ -24,14 +29,34 @@ void takeOffPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &
                 float savedRadius = newPlane->traj.getRadius() + 50;
                 float savedSpeed = newPlane->getSpeed();
                 float saveHeight = newPlane->getHeight();
-                cout << savedRadius << " " << savedSpeed;
+                cout << savedRadius << " " << savedSpeed << endl;
 
                 newPlane->traj.setRadius(0);
 
                 // On ajoute l'avion à notre vector de plane
+                newPlane->setLandingPhase(false);
+                newPlane->setWaitingToLand(false);
                 vecPlane.push_back(newPlane);
 
-                float currentRadius = 1.f;
+                float currentSpeed = 0.f;
+                float currentHeight = 20.f;
+
+                float stepSpeed = 10.f;
+                while(currentSpeed != savedSpeed){
+                    if(currentSpeed >+ savedSpeed){
+                        newPlane->setHeight(saveHeight);
+                        newPlane->setSpeed(savedSpeed);
+                        break;
+                    }
+                    currentSpeed += stepSpeed;
+                    currentHeight = saveHeight/savedSpeed * currentSpeed;
+                    newPlane->setSpeed(currentSpeed);
+                    newPlane->setHeight(currentHeight);
+                    cout << currentSpeed << " / " << currentHeight << "\n";
+                    Sleep(DWORD(500));
+                }
+
+                /*float currentRadius = 1.f;
                 float currentSpeed = 0.f;
                 float currentHeight = 20.f;
 
@@ -52,13 +77,12 @@ void takeOffPhase(vector<Airport*> &vecAirport, vector<Plane*> &vecPlane, bool &
                     newPlane->setSpeed(currentSpeed);
                     newPlane->setHeight(currentHeight);
                     Sleep(DWORD(500));
-                }
-
-                this_thread::sleep_for(1s);
+                }*/
 
                 // On supprime l'avion
-                vecPlane.erase(std::remove(vecPlane.begin(), vecPlane.end(), newPlane), vecPlane.end());
+                //vecPlane.erase(std::remove(vecPlane.begin(), vecPlane.end(), newPlane), vecPlane.end());
 
+                this_thread::sleep_for(5s);
                 APPMutex.unlock();
             } else {
                 this_thread::sleep_for(1s);
